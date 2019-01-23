@@ -56,24 +56,42 @@ namespace THPS.API.Utils
             return ret;
         }
 
-        public async Task<string> ResolveChecksum(System.UInt32 checksum)
+        public async Task<string> ResolveChecksum(System.UInt32 checksum, int? compressedByteSize = null)
         {
-            var record = new Repository.ScriptKeyRecord();
-            record.checksum = checksum;
-            record = await scriptKeyRepository.GetRecord(record);
-            return record?.name;
+            if(compressedByteSize.HasValue)
+            {
+                var rec = await ResolveCompressedKey(checksum, compressedByteSize.Value);
+                if(rec != null && rec.name != null)
+                {
+                    return rec.name;
+                }
+            } else
+            {
+                var record = new Repository.ScriptKeyRecord();
+                record.checksum = checksum;
+                record = await scriptKeyRepository.GetRecord(record);
+                return record?.name;
+            }
+            return null;
         }
 
+        public async Task<QScript.ScriptKeyRecord> ResolveCompressedKey(System.Int64 key, int compressedByteSize)
+        {
+            await LoadCompressedKeys();
+            var record = compressedKeys.Where(s => s.checksum == key && s.compressedByteSize == compressedByteSize).FirstOrDefault();
+            if(record != null)
+            {
+                var qrec = new QScript.ScriptKeyRecord();
+                qrec.name = record.name.ToLower();
+                qrec.checksum = record.checksum;
+                qrec.compressedByteSize = record.compressedByteSize;
+                return qrec;
+            }
+            return null;
+        }
         public async Task<QScript.ScriptKeyRecord> GetCompressedKey(string keyName)
         {
-            if(compressedKeys == null)
-            {
-                var lookup = new Repository.ScriptKeyRecord();
-                lookup.name = keyName;
-                lookup.platform = platform;
-                lookup.version = version;
-                compressedKeys = await scriptKeyRepository.GetCompressTables(lookup);
-            }
+            await LoadCompressedKeys();
             var record = compressedKeys.Where(s => s.name.ToLower() == keyName.ToLower()).FirstOrDefault();
             if(record != null)
             {
@@ -84,6 +102,16 @@ namespace THPS.API.Utils
                 return qrec;
             }
             return null;
+        }
+        private async Task LoadCompressedKeys()
+        {
+            if (compressedKeys == null)
+            {
+                var lookup = new Repository.ScriptKeyRecord();
+                lookup.platform = platform;
+                lookup.version = version;
+                compressedKeys = await scriptKeyRepository.GetCompressTables(lookup);
+            }
         }
     }
 }

@@ -13,8 +13,9 @@ namespace QScript
     };
     public interface IChecksumResolver
     {
-        Task<string> ResolveChecksum(System.UInt32 checksum);
-        Task<QScript.ScriptKeyRecord> GetCompressedKey(string keyName);
+        Task<string> ResolveChecksum(System.UInt32 checksum, int? compressedByteSize = null);
+        Task<QScript.ScriptKeyRecord> ResolveCompressedKey(System.Int64 key, int compressedByteSize);
+        Task<QScript.ScriptKeyRecord> GetCompressedKey(string key);
         Task<System.UInt32> GenerateChecksum(string message);
         Task<System.UInt32> GenerateChecksum(byte[] message);
     }

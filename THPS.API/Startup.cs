@@ -97,7 +97,7 @@ namespace THPS.API
                         .AddEnvironmentVariables();
             this.Configuration = builder.Build();
 
-
+            app.UseAuthentication();
             app.UseMvc();
         }
     }

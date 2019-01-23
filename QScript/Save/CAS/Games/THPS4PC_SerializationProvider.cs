@@ -53,12 +53,11 @@ namespace QScript.Save.CAS.Games
             {
                 if (System.UInt32.TryParse(item.name.ToString(), out checksum))
                 {
-                    record = new ScriptKeyRecord();
-                    record.checksum = checksum;
-                    record.compressedByteSize = item.compressedByteSize;
-                    var name = await checksumResolver.ResolveChecksum(checksum);
+                    String name = await checksumResolver.ResolveChecksum(checksum, item.compressedByteSize);
+                    
                     if (name != null)
                     {
+                        item.compressedByteSize = null;
                         item.name = name;
                     }
                     else
