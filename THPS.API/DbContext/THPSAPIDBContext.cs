@@ -20,7 +20,7 @@ namespace THPS.API.DbContext
         }
         public IMongoDatabase GetDatabase()
         {
-            return client.GetDatabase("checksums");
+            return client.GetDatabase("QScript");
         }
     }
 }
