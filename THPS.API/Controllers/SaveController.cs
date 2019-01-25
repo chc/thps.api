@@ -22,7 +22,7 @@ namespace THPS.API.Controllers
         {
             this.scriptKeyRepository = scriptKeyRepository;
         }
-        [HttpPost("DeserializeCAS/{platform}/{version}")]
+        [HttpPost("Deserialize/{platform}/{version}")]
         public async Task<Dictionary<string, object>> PostDownloadCAS(GamePlatform platform, GameVersion version)
         {
             IChecksumResolver checksumResolver = new THPS.API.Utils.ChecksumResolver(scriptKeyRepository, platform, version);
@@ -36,7 +36,9 @@ namespace THPS.API.Controllers
                 {
                     await file.CopyToAsync(ms);
                     ms.Seek(0, SeekOrigin.Begin);
-                    return await deserializer.DeserializeCAS(bs);
+                    var results = await deserializer.DeserializeCAS(bs);
+                    results.Remove("headerInfo");
+                    return results;
                 }
             }
         }
