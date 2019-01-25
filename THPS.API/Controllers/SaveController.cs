@@ -58,7 +58,7 @@ namespace THPS.API.Controllers
                 FileDownloadName = "save." + friendlyName
             };
         }
-
+        [Authorize(Policy = "Admin")]
         [HttpPost("RegisterFile/{platform}/{version}/{friendlyName}")]
         public async Task<SaveFileTypeRecord> RegisterFile(GamePlatform platform, GameVersion version, string friendlyName)
         {

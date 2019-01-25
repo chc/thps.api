@@ -58,6 +58,10 @@ namespace THPS.API
 
             services.AddAuthorization(options =>
             {
+                options.AddPolicy("Admin", policy => policy.RequireAssertion(context =>
+                {
+                    return context.User.HasClaim(c => (c.Type == "role" && c.Value == "Admin"));
+                }));
                 options.AddPolicy("SaveAccess", policy => policy.RequireAssertion(context =>
                 {
                     return context.User.HasClaim(c => (c.Type == "role" && c.Value == "Admin") || (c.Type == "role" && c.Value == "SaveAccess"));
