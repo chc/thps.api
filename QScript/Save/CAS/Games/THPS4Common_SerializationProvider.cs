@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace QScript.Save.CAS.Games
 {
-    public abstract class THPS4PC_SerializationProvider : ISerializationProvider
+    public class THPS4Common_SerializationProvider : ISerializationProvider
     {
         private class FileHeader
         {
@@ -39,7 +39,7 @@ namespace QScript.Save.CAS.Games
         private IChecksumResolver checksumResolver;
         private System.Int32 version;
         private long fixedFileSize;
-        public THPS4PC_SerializationProvider(IChecksumResolver checksumResolver, System.Int32 version, long fixedFileSize)
+        public THPS4Common_SerializationProvider(IChecksumResolver checksumResolver, System.Int32 version, long fixedFileSize)
         {
             this.checksumResolver = checksumResolver;
             this.version = version;
@@ -157,6 +157,11 @@ namespace QScript.Save.CAS.Games
             var dict = new Dictionary<string, object>();
             dict["summary"] = summary;
             dict["save_data"] = save_data;
+
+            var headerInfo = new Dictionary<string, object>();
+            headerInfo["version"] = header.version;
+            headerInfo["fixedFileSize"] = bs.BaseStream.Length;
+            dict["headerInfo"] = headerInfo;
             return dict;
         }
 

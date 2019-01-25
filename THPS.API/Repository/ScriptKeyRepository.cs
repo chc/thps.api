@@ -227,8 +227,69 @@ namespace THPS.API.Repository
                 }
             });
             return list;
+        }
 
+        public async Task<SaveFileTypeRecord> SaveFileInfo(SaveFileTypeRecord lookup)
+        {
+            var db = dbContext.GetDatabase();
+            var collection = db.GetCollection<BsonDocument>("saveFileTypes");
+            var document = new BsonDocument
+            {
+                { "name", new BsonString(lookup.name)},
+                { "platform", new BsonInt32((System.Int32)lookup.platform)},
+                { "game", new BsonInt32((System.Int32)lookup.version)},
+                { "fixedFileSize", new BsonInt32((System.Int32)lookup.fixedFileSize)},
+                { "fileVersion", new BsonInt32((System.Int32)lookup.fileVersion)},
+            };
+            
+            await collection.InsertOneAsync(document);
 
+            return lookup;
+        }
+        public async Task<SaveFileTypeRecord> GetFileInfo(string name, GameVersion version, GamePlatform platform)
+        {
+            var db = dbContext.GetDatabase();
+            var collection = db.GetCollection<BsonDocument>("saveFileTypes");
+
+            var match = new BsonDocument
+            {
+                { "platform", new BsonInt32((int)platform)},
+                { "game", new BsonInt32((int)version)},
+                { "name", new BsonString(name)},
+            };
+
+            PipelineDefinition<BsonDocument, BsonDocument> pipeline = new BsonDocument[]
+            {
+                new BsonDocument { { "$match", match } }
+            };
+
+            var list = new List<ScriptKeyRecord>();
+            var results = await collection.AggregateAsync(pipeline);
+            var result = results.FirstOrDefault();
+            if (result == null) return null;
+            var record = new SaveFileTypeRecord();
+
+            var column = result.Elements.Where(s => s.Name.ToLower().Equals("fixedfilesize")).FirstOrDefault();
+            if (column.Value != null)
+                record.fixedFileSize = (System.UInt32)column.Value.ToInt32();
+
+            column = result.Elements.Where(s => s.Name.ToLower().Equals("fileversion")).FirstOrDefault();
+            if (column.Value != null)
+                record.fileVersion = (System.UInt32)column.Value.ToInt32();
+
+            column = result.Elements.Where(s => s.Name.ToLower().Equals("version")).FirstOrDefault();
+            if (column.Value != null)
+                record.version = (GameVersion)column.Value.ToInt32();
+
+            column = result.Elements.Where(s => s.Name.ToLower().Equals("platform")).FirstOrDefault();
+            if (column.Value != null)
+                record.platform = (GamePlatform)column.Value.ToInt32();
+
+            column = result.Elements.Where(s => s.Name.ToLower().Equals("name")).FirstOrDefault();
+            if (column.Value != null)
+                record.name = column.Value.ToString();
+
+            return record;
         }
     }
 }
