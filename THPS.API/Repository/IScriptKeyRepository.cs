@@ -8,7 +8,7 @@ namespace THPS.API.Repository
 {
     public class ScriptKeyRecord
     {
-        public System.UInt32? checksum;
+        public System.Int32? checksum;
         public String name;
         public GameVersion? version;
         public GamePlatform? platform;

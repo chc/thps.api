@@ -21,7 +21,7 @@ namespace THPS.API.Controllers
         }
         // GET: api/<controller>
         [HttpGet("getByChecksum/{checksum}")]
-        public Task<ScriptKeyRecord> GetByChecksum(System.UInt32 checksum)
+        public Task<ScriptKeyRecord> GetByChecksum(System.Int32 checksum)
         {
             ScriptKeyRecord lookup = new ScriptKeyRecord();
             lookup.checksum = checksum;

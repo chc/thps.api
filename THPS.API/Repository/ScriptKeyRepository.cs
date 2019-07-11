@@ -31,7 +31,7 @@ namespace THPS.API.Repository
                 }
                 resp = new ScriptKeyRecord();
                 var crc = new Crc32();
-                resp.checksum = crc.Get(Encoding.ASCII.GetBytes(record.name.ToLower()));
+                resp.checksum = (System.Int32)crc.Get(Encoding.ASCII.GetBytes(record.name.ToLower()));
                 resp.name = record.name;
                 await SaveRecord(resp);
             } else if(record.checksum.HasValue)
@@ -82,6 +82,7 @@ namespace THPS.API.Repository
             var dbResult = results.FirstOrDefault();
             if (dbResult == null)
             {
+                record.checksum = null;
                 return record;
             }
             return ConvertResultToRecord(dbResult);
@@ -151,7 +152,10 @@ namespace THPS.API.Repository
 
             column = document.Elements.Where(s => s.Name.ToLower().Equals("checksum")).FirstOrDefault();
             if (column.Value != null)
-                result.checksum = (System.UInt32)column.Value.ToInt32();
+                result.checksum = (System.Int32)column.Value.ToInt32();
+            else {
+                result.checksum = null;
+            }
 
             column = document.Elements.Where(s => s.Name.ToLower().Equals("version")).FirstOrDefault();
             if (column.Value != null)
@@ -219,7 +223,7 @@ namespace THPS.API.Repository
                 {
                     var item = new ScriptKeyRecord();
                     item.name = entries_array[c].AsString;
-                    item.checksum = (System.UInt32)c;
+                    item.checksum = (System.Int32)c;
                     item.platform = (GamePlatform)platform;
                     item.version = (GameVersion)game;
                     item.compressedByteSize = compressedByteSize;

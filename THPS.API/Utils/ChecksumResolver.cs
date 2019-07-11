@@ -48,7 +48,7 @@ namespace THPS.API.Utils
             foreach(var entry in entries)
             {
                 var qrec = new QScript.ScriptKeyRecord();
-                qrec.checksum = entry.checksum;
+                qrec.checksum = (System.UInt32)entry.checksum;
                 qrec.compressedByteSize = entry.compressedByteSize;
                 qrec.name = entry.name;
                 ret.Add(qrec);
@@ -68,7 +68,7 @@ namespace THPS.API.Utils
             } else
             {
                 var record = new Repository.ScriptKeyRecord();
-                record.checksum = checksum;
+                record.checksum = (System.Int32)checksum;
                 record = await scriptKeyRepository.GetRecord(record);
                 return record?.name;
             }
@@ -83,7 +83,7 @@ namespace THPS.API.Utils
             {
                 var qrec = new QScript.ScriptKeyRecord();
                 qrec.name = record.name.ToLower();
-                qrec.checksum = record.checksum;
+                qrec.checksum = (System.UInt32)record.checksum;
                 qrec.compressedByteSize = record.compressedByteSize;
                 return qrec;
             }
@@ -97,7 +97,7 @@ namespace THPS.API.Utils
             {
                 var qrec = new QScript.ScriptKeyRecord();
                 qrec.name = keyName.ToLower();
-                qrec.checksum = record.checksum;
+                qrec.checksum = (System.UInt32)record.checksum;
                 qrec.compressedByteSize = record.compressedByteSize;
                 return qrec;
             }
