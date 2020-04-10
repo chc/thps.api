@@ -24,6 +24,10 @@ namespace THPS.API.Authentication
             return Task.Run(() =>
             {
                 try {
+                    if(!Context.Request.Headers.ContainsKey("APIKey"))
+                    {
+                        return AuthenticateResult.NoResult();
+                    }
                     var APIKey = Context.Request.Headers["APIKey"];
                     var encrypted_buff = Convert.FromBase64String(APIKey);
                     var DecryptedAPIKey = apiKeyProvider.DecryptData(encrypted_buff);
@@ -51,7 +55,7 @@ namespace THPS.API.Authentication
                 }
                  catch(System.Exception e)
                 {
-                    return AuthenticateResult.Fail("Invalid APIKey");
+                    return AuthenticateResult.Fail(e);
                 }
 
             });

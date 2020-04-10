@@ -18,6 +18,7 @@ namespace THPS.API.Controllers
         public List<string> roles;
         public int? expiresInSecs;
     }
+    [ApiController]
     [Authorize(Policy = "APIKeyManage")]
     [Route("api/[controller]")]
     public class APIKeyController : Controller

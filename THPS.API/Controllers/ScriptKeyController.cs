@@ -10,6 +10,7 @@ using THPS.API.Repository;
 
 namespace THPS.API.Controllers
 {
+    [ApiController]
     [Route("api/[controller]")]
     public class ScriptKeyController : Controller
     {
@@ -21,11 +22,12 @@ namespace THPS.API.Controllers
         }
         // GET: api/<controller>
         [HttpGet("getByChecksum/{checksum}")]
-        public Task<ScriptKeyRecord> GetByChecksum(System.Int32 checksum)
+        public async Task<ScriptKeyRecord> GetByChecksum(System.Int32 checksum)
         {
             ScriptKeyRecord lookup = new ScriptKeyRecord();
             lookup.checksum = checksum;
-            return scriptKeyRepository.GetRecord(lookup);
+            var result = await scriptKeyRepository.GetRecord(lookup);
+            return result;
         }
 
         [HttpGet("GetCompressedTable/{platform}/{version}")]
