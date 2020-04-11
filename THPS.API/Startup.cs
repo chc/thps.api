@@ -12,6 +12,7 @@ using THPS.API.Utils;
 
 using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
+using QScript.JsonConverters;
 
 namespace THPS.API
 {
@@ -65,7 +66,10 @@ namespace THPS.API
             });
 
             services.AddMvc().AddNewtonsoftJson(options =>
-                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                options.SerializerSettings.Converters.Add(new QTokenConverter());
+            }
             ).SetCompatibilityVersion(CompatibilityVersion.Latest);
 
 
@@ -123,6 +127,7 @@ namespace THPS.API
             app.UseRouting();
 
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

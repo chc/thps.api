@@ -143,7 +143,7 @@ namespace QScript.Save.CAS.Games
         }
         public async Task<Dictionary<string, object>> DeserializeCAS(BinaryReader bs)
         {
-            QScript.BufferReader qReader = new QScript.BufferReader(bs);
+            QScript.SymbolBufferReader qReader = new QScript.SymbolBufferReader(bs);
             FileHeader header = new FileHeader();
             header.Read(bs);
             if (!ValidateChecksums(header, bs))
@@ -167,7 +167,7 @@ namespace QScript.Save.CAS.Games
 
         public async Task<MemoryStream> SerializeCAS(Dictionary<String, List<SymbolEntry>> saveData)
         {
-            var qw = new BufferWriter();
+            var qw = new SymbolBufferWriter();
             using (MemoryStream ms = new MemoryStream())
             {
                 using (BinaryWriter bw = new BinaryWriter(ms))

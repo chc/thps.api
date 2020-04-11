@@ -7,9 +7,9 @@ namespace QScript
 {
     public class ScriptKeyRecord
     {
-        public System.UInt32? checksum;
-        public String name;
-        public int? compressedByteSize;
+        public System.UInt32? checksum { get; set; }
+        public String name { get; set; }
+        public int? compressedByteSize { get; set; }
     };
     public interface IChecksumResolver
     {

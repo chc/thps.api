@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace QScript
 {
-    public class BufferReader
+    public class SymbolBufferReader
     {
         BinaryReader _bs;
-        public BufferReader(BinaryReader bs)
+        public SymbolBufferReader(BinaryReader bs)
         {
             _bs = bs;
         }
@@ -112,7 +112,7 @@ namespace QScript
                 case ESymbolType.ESYMBOLTYPE_ARRAY:
                     return ReadArray(out subType);
                 case ESymbolType.ESYMBOLTYPE_STRUCTURE:
-                    BufferReader reader = new BufferReader(_bs);
+                    SymbolBufferReader reader = new SymbolBufferReader(_bs);
                     return reader.ReadBuffer();
                 case ESymbolType.ESYMBOLTYPE_PAIR:
                     float_list.Add(_bs.ReadSingle());

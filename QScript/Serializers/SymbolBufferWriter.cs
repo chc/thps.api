@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace QScript
 {
-    public class BufferWriter
+    public class SymbolBufferWriter
     {
         private Crc32 crc32;
         public class BufferWriterOptions
@@ -22,7 +22,7 @@ namespace QScript
             public int index;
         }
 
-        public BufferWriter()
+        public SymbolBufferWriter()
         {
             crc32 = new Crc32();
         }
