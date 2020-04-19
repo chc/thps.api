@@ -52,7 +52,7 @@ namespace QScript.JsonConverters
                         } else
                         {
                             writer.WritePropertyName(item.value.ToString());
-                            if(qList[i + 1].type != EScriptToken.ESCRIPTTOKEN_EQUALS && qList[i + 2].type != EScriptToken.ESCRIPTTOKEN_EQUALS)
+                            if(qList[i + 1].type != EScriptToken.ESCRIPTTOKEN_EQUALS /*&& qList[i + 2].type != EScriptToken.ESCRIPTTOKEN_EQUALS*/)
                             {
                                 writer.WriteValue(true);
                             }
@@ -63,7 +63,14 @@ namespace QScript.JsonConverters
                     case EScriptToken.ESCRIPTTOKEN_INTEGER:
                         if (isLiteral(lastToken)) continue;
                         inAssignment = false;
-                        writer.WriteValue((int)item.value);
+                        try
+                        {
+                            writer.WriteValue((int)item.value);
+                        } catch
+                        {
+                            writer.WritePropertyName("unnamed");
+                            writer.WriteValue((int)item.value);
+                        }
                         break;
                     case EScriptToken.ESCRIPTTOKEN_FLOAT:
                         if (isLiteral(lastToken)) continue;
@@ -125,6 +132,7 @@ namespace QScript.JsonConverters
                         break;
                     case EScriptToken.ESCRIPTTOKEN_CHECKSUM_NAME:
                     case EScriptToken.ESCRIPTTOKEN_ENDOFFILE:
+                    case EScriptToken.ESCRIPTTOKEN_COMMA:
                         break;
                     default:
                         throw new NotImplementedException();

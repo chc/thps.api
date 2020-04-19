@@ -83,15 +83,48 @@ namespace QScript
                     }
                     return s;
                 case EScriptToken.ESCRIPTTOKEN_KEYWORD_SCRIPT:
-                case EScriptToken.ESCRIPTTOKEN_KEYWORD_ENDSCRIPT:
-
+                    _bs.ReadByte(); //function size
+                    return _bs.ReadInt32(); //script name
+                //case EScriptToken.ESCRIPTTOKEN_KEYWORD_ENDSCRIPT:
+                case EScriptToken.ESCRIPTTOKEN_COMMA:
                 case EScriptToken.ESCRIPTTOKEN_ENDOFLINE:
                 case EScriptToken.ESCRIPTTOKEN_EQUALS:
                 case EScriptToken.ESCRIPTTOKEN_STARTSTRUCT:
                 case EScriptToken.ESCRIPTTOKEN_ENDSTRUCT:
                 case EScriptToken.ESCRIPTTOKEN_STARTARRAY:
                 case EScriptToken.ESCRIPTTOKEN_ENDARRAY:
+                case EScriptToken.ESCRIPTTOKEN_OPENPARENTH:
+                case EScriptToken.ESCRIPTTOKEN_CLOSEPARENTH:
+                case EScriptToken.ESCRIPTTOKEN_ARG:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_ALLARGS:
+                case EScriptToken.ESCRIPTTOKEN_GREATERTHAN:
+                case EScriptToken.ESCRIPTTOKEN_GREATERTHANEQUAL:
+                case EScriptToken.ESCRIPTTOKEN_LESSTHAN:
+                case EScriptToken.ESCRIPTTOKEN_LESSTHANEQUAL:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_ENDIF:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_ENDSCRIPT:
+                case EScriptToken.ESCRIPTTOKEN_MULTIPLY:
+                case EScriptToken.ESCRIPTTOKEN_DIVIDE:
+                case EScriptToken.ESCRIPTTOKEN_ADD:
+                case EScriptToken.ESCRIPTTOKEN_MINUS:
+                case EScriptToken.ESCRIPTTOKEN_OR:
+                case EScriptToken.ESCRIPTTOKEN_AND:
+                case EScriptToken.ESCRIPTTOKEN_COLON:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_SWITCH:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_ENDSWITCH:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_NOT:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_RANDOM:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_BEGIN:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_REPEAT:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_CASE:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_DEFAULT:
+                case EScriptToken.ESCRIPTTOKEN_KEYWORD_RETURN:
                     return null;
+                case EScriptToken.ESCRIPTTOKEN_RUNTIME_RELATIVE_JUMP:
+                    return _bs.ReadInt16();
+                case EScriptToken.ESCRIPTTOKEN_RUNTIME_IF2:
+                case EScriptToken.ESCRIPTTOKEN_RUNTIME_ELSE2:
+                    return _bs.ReadInt16(); //jump length                    
                 case EScriptToken.ESCRIPTTOKEN_CHECKSUM_NAME:
                     var checksum_number = _bs.ReadUInt32();
                     string checksum_name = "";

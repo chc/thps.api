@@ -113,6 +113,13 @@ namespace QScript
         ESCRIPTTOKEN_RUNTIME_CFUNCTION, // 67
         ESCRIPTTOKEN_RUNTIME_MEMBERFUNCTION, // 68
 
+        //THUG2 additions
+
+        //unknown until 71
+        ESCRIPTTOKEN_RUNTIME_IF2 = 71,
+        ESCRIPTTOKEN_RUNTIME_ELSE2,
+        ESCRIPTTOKEN_RUNTIME_RELATIVE_JUMP,
+
         // Warning! Do not exceed 256 entries, since these are stored in bytes.
     };
 
