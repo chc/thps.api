@@ -105,6 +105,7 @@ namespace QScript
                 case EScriptToken.ESCRIPTTOKEN_KEYWORD_ENDSCRIPT:
                 case EScriptToken.ESCRIPTTOKEN_MULTIPLY:
                 case EScriptToken.ESCRIPTTOKEN_DIVIDE:
+                case EScriptToken.ESCRIPTTOKEN_DOT:
                 case EScriptToken.ESCRIPTTOKEN_ADD:
                 case EScriptToken.ESCRIPTTOKEN_MINUS:
                 case EScriptToken.ESCRIPTTOKEN_OR:
@@ -125,6 +126,8 @@ namespace QScript
                 case EScriptToken.ESCRIPTTOKEN_RUNTIME_IF2:
                 case EScriptToken.ESCRIPTTOKEN_RUNTIME_ELSE2:
                     return _bs.ReadInt16(); //jump length                    
+                case EScriptToken.ESCRIPTTOKEN_ENDOFLINENUMBER:
+                    return null;
                 case EScriptToken.ESCRIPTTOKEN_CHECKSUM_NAME:
                     var checksum_number = _bs.ReadUInt32();
                     string checksum_name = "";

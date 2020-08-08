@@ -87,7 +87,15 @@ namespace QScript.JsonConverters
                     case EScriptToken.ESCRIPTTOKEN_STARTARRAY:
                         inAssignment = false;
                         inArray = true;
-                        writer.WriteStartArray();
+                        try
+                        {
+                            writer.WriteStartArray();
+                        } catch
+                        {
+                            writer.WritePropertyName("unnamed");
+                            writer.WriteStartArray();
+                        }
+                        
                         break;
                     case EScriptToken.ESCRIPTTOKEN_ENDARRAY:
                         inArray = false;
