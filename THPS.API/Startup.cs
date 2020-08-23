@@ -93,6 +93,11 @@ namespace THPS.API
                 {
                     return context.User.HasClaim(c => (c.Type == "role" && c.Value == "Admin"));
                 }));
+
+                options.AddPolicy("SceneAccess", policy => policy.RequireAssertion(context =>
+                {
+                    return context.User.HasClaim(c => (c.Type == "role" && c.Value == "Admin") || (c.Type == "role" && c.Value == "SceneAccess"));
+                }));
             });
 
             services.AddAuthentication("ApiKeyAuth").AddScheme<ApiKeyAuthOpts, ApiKeyAuthHandler>("ApiKeyAuth", "ApiKeyAuth", opts => { });
