@@ -277,17 +277,45 @@ namespace Asset
 
                 if ((materialTexture.flags & (uint)EMaterialFlag.MATFLAG_UV_WIBBLE) != 0)
                 {
-
-
+                    bw.Write(materialTexture.uvWibbleParams.UVel);
+                    bw.Write(materialTexture.uvWibbleParams.VVel);
+                    bw.Write(materialTexture.uvWibbleParams.UFrequency);
+                    bw.Write(materialTexture.uvWibbleParams.VFrequency);
+                    bw.Write(materialTexture.uvWibbleParams.UAmplitude);
+                    bw.Write(materialTexture.uvWibbleParams.VAmplitude);
+                    bw.Write(materialTexture.uvWibbleParams.UPhase);
+                    bw.Write(materialTexture.uvWibbleParams.VPhase);
                 }
 
                 if (first && (materialTexture.flags & (uint)EMaterialFlag.MATFLAG_VC_WIBBLE) != 0)
                 {
-
-
+                    bw.Write((System.UInt32)materialTexture.vcWibbleParams.Count);
+                    foreach(var item in materialTexture.vcWibbleParams)
+                    {
+                        bw.Write((System.UInt32)item.keyframes.Count);
+                        bw.Write(item.phase);
+                        foreach(var frame in item.keyframes)
+                        {
+                            bw.Write((System.UInt32)frame.time);
+                            bw.Write((Byte)frame.colour.X);
+                            bw.Write((Byte)frame.colour.Y);
+                            bw.Write((Byte)frame.colour.Z);
+                            bw.Write((Byte)frame.colour.W);
+                        }
+                    }
                 }
+
                 if ((materialTexture.flags & (uint)EMaterialFlag.MATFLAG_PASS_TEXTURE_ANIMATES) != 0)
                 {
+                    bw.Write((System.Int32)materialTexture.textureWibbleParams.keyframes.Count);
+                    bw.Write(materialTexture.textureWibbleParams.period);
+                    bw.Write(materialTexture.textureWibbleParams.num_iterations);
+                    bw.Write(materialTexture.textureWibbleParams.phase);
+                    foreach(var frame in materialTexture.textureWibbleParams.keyframes)
+                    {
+                        bw.Write(frame.time);
+                        bw.Write(frame.texture);
+                    }
                 }
 
                 bw.Write(materialTexture.MMAG);

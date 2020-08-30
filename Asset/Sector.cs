@@ -9,39 +9,107 @@ namespace Asset
     public class SectorPerVertexData
     {
         public System.Numerics.Vector3 position { get; set; }
-        public System.Numerics.Vector3 normal { get; set; }
-        public System.UInt32 weight { get; set; }
-        public System.Numerics.Vector4 bone_indices { get; set; }
+        public System.Numerics.Vector3? normal { get; set; }
+        public System.UInt32? weight { get; set; }
+        public System.Numerics.Vector4? bone_indices { get; set; }
         public System.Numerics.Vector2[] texture_uvs { get; set; }
-        public System.UInt32 vertex_colour { get; set; }
-        public System.Byte vc_wibble_index { get; set; }
+        public System.UInt32? vertex_colour { get; set; }
+        public System.Byte? vc_wibble_index { get; set; }
     }
     public class Sector
     {
-        public System.UInt32 sector_checksum;
-        public System.Int32 bone_idx;
+        public System.UInt32 sector_checksum { get; set; }
+        public System.Int32 bone_idx { get; set; }
 
-        public System.Int32 flags;
+        public System.UInt32 flags { get; set; }
 
-        public System.Numerics.Matrix3x2 bbox;
+        public System.Numerics.Matrix3x2 bbox { get; set; }
 
-        public System.Numerics.Vector4 bsphere;
+        public System.Numerics.Vector4 bsphere { get; set; }
 
-        public System.UInt32 billboard_type;
-        public System.Numerics.Vector3 billboard_origin;
-        public System.Numerics.Vector3 billboard_pivot_pos;
-        public System.Numerics.Vector3 billboard_pivot_axis;
+        public System.UInt32 billboard_type { get; set; }
+        public System.Numerics.Vector3? billboard_origin { get; set; }
+        public System.Numerics.Vector3? billboard_pivot_pos { get; set; }
+        public System.Numerics.Vector3? billboard_pivot_axis { get; set; }
 
         //[JsonIgnore]
         public ICollection<SectorPerVertexData> vertices { get; set; }
 
-        public ICollection<Mesh> meshes;
+        public ICollection<Mesh> meshes { get; set; }
+        private static uint CalculateVertexStride(Sector sector)
+        {
+            var flags = CalculateFlags(sector);
+            uint stride = 0;
+            stride += 4 * 3; //sizeof(float) * 3 (position)
+            if ((flags & (uint)0x04) != 0)
+            {
+                stride += 4 * 3;
+            }
+
+            if ((flags & (uint)0x10) != 0)
+            {
+                stride += 4 * 5;
+            }
+            if ((flags & (int)0x02) != 0)
+            {
+                stride += 4;
+            }
+            if ((flags & (int)0x01) != 0)
+            {
+                var enumerator = sector.vertices.GetEnumerator();
+                enumerator.MoveNext();
+                var first_vertex = enumerator.Current;
+                stride += (uint)first_vertex.texture_uvs.Length * 4 * 2;
+            }
+            if ((flags & (int)0x800) != 0)
+            {
+                stride++;
+            }
+            return stride;
+        }
+        private static uint CalculateFlags(Sector sector)
+        {
+            uint flags = 0;
+            if(sector.billboard_origin.HasValue)
+            {
+                flags |= (uint)0x00800000UL;
+            }
+
+            if(sector.vertices.Count > 0)
+            {
+                var enumerator = sector.vertices.GetEnumerator();
+                enumerator.MoveNext();
+                var first_vertex = enumerator.Current;
+                if (first_vertex.normal.HasValue)
+                {
+                    flags |= (uint)0x04;
+                }
+                if (first_vertex.bone_indices.HasValue)
+                {
+                    flags |= (uint)0x10;
+                }
+                if (first_vertex.texture_uvs != null && first_vertex.texture_uvs.Length > 0)
+                {
+                    flags |= (uint)0x01;
+                }
+                if (first_vertex.vertex_colour.HasValue)
+                {
+                    flags |= (uint)0x02;
+                }
+                if(first_vertex.vc_wibble_index.HasValue)
+                {
+                    flags |= (uint)0x800;
+                }
+            }
+            
+            return flags;
+        }
         public static void WriteSector(Sector sector, System.IO.BinaryWriter bw)
         {
-            int flags = 0; ///XXX: calculate flags
+            uint flags = CalculateFlags(sector); ///XXX: calculate flags
             bw.Write(sector.sector_checksum);
             bw.Write(sector.bone_idx);
-            bw.Write(sector.flags);
+            bw.Write(flags);
 
             bw.Write((UInt32)sector.meshes.Count);
 
@@ -57,28 +125,28 @@ namespace Asset
             bw.Write(sector.bsphere.Z);
             bw.Write(sector.bsphere.W);
 
-            if ((flags & (int)0x00800000UL) != 0)
+            if ((flags & (uint)0x00800000UL) != 0)
             {
                 bw.Write(sector.billboard_type);
 
-                bw.Write(sector.billboard_origin.X);
-                bw.Write(sector.billboard_origin.Y);
-                bw.Write(sector.billboard_origin.Z);
+                bw.Write(sector.billboard_origin.Value.X);
+                bw.Write(sector.billboard_origin.Value.Y);
+                bw.Write(sector.billboard_origin.Value.Z);
 
-                bw.Write(sector.billboard_pivot_pos.X);
-                bw.Write(sector.billboard_pivot_pos.Y);
-                bw.Write(sector.billboard_pivot_pos.Z);
+                bw.Write(sector.billboard_pivot_pos.Value.X);
+                bw.Write(sector.billboard_pivot_pos.Value.Y);
+                bw.Write(sector.billboard_pivot_pos.Value.Z);
 
-                bw.Write(sector.billboard_pivot_axis.X);
-                bw.Write(sector.billboard_pivot_axis.Y);
-                bw.Write(sector.billboard_pivot_axis.Z);
+                bw.Write(sector.billboard_pivot_axis.Value.X);
+                bw.Write(sector.billboard_pivot_axis.Value.Y);
+                bw.Write(sector.billboard_pivot_axis.Value.Z);
             }
 
-            bw.Write(sector.vertices.Count);
+            bw.Write((System.UInt32)sector.vertices.Count);
 
             int num_tc_sets = 0;
 
-            bw.Write((System.UInt32)0); //XXX: calculate stride
+            bw.Write((System.UInt32)CalculateVertexStride(sector)); //XXX: calculate stride
             foreach (var vertex in sector.vertices)
             {
                 num_tc_sets = vertex.texture_uvs.Length;
@@ -91,9 +159,9 @@ namespace Asset
             {
                 foreach (var vertex in sector.vertices)
                 {
-                    bw.Write(vertex.normal.X);
-                    bw.Write(vertex.normal.Y);
-                    bw.Write(vertex.normal.Z);
+                    bw.Write(vertex.normal.Value.X);
+                    bw.Write(vertex.normal.Value.Y);
+                    bw.Write(vertex.normal.Value.Z);
                 }
             }
 
@@ -101,14 +169,14 @@ namespace Asset
             {
                 foreach (var vertex in sector.vertices)
                 {
-                    bw.Write(vertex.weight);
+                    bw.Write(vertex.weight.Value);
                 }
                 foreach (var vertex in sector.vertices)
                 {
-                    bw.Write(vertex.bone_indices.X);
-                    bw.Write(vertex.bone_indices.Y);
-                    bw.Write(vertex.bone_indices.Z);
-                    bw.Write(vertex.bone_indices.W);
+                    bw.Write((System.UInt16)vertex.bone_indices.Value.X);
+                    bw.Write((System.UInt16)vertex.bone_indices.Value.Y);
+                    bw.Write((System.UInt16)vertex.bone_indices.Value.Z);
+                    bw.Write((System.UInt16)vertex.bone_indices.Value.W);
                 }
             }
             if ((flags & (int)0x01) != 0)
@@ -128,7 +196,7 @@ namespace Asset
             {
                 foreach (var vertex in sector.vertices)
                 {
-                    bw.Write(vertex.vertex_colour);
+                    bw.Write(vertex.vertex_colour.Value);
                 }
             }
 
@@ -136,7 +204,7 @@ namespace Asset
             {
                 foreach (var vertex in sector.vertices)
                 {
-                    bw.Write(vertex.vc_wibble_index);
+                    bw.Write(vertex.vc_wibble_index.Value);
                 }
             }
             foreach(var mesh in sector.meshes)
@@ -151,7 +219,7 @@ namespace Asset
 
             result.bone_idx = bs.ReadInt32();
 
-            result.flags = bs.ReadInt32();
+            result.flags = bs.ReadUInt32();
 
             uint num_meshes = bs.ReadUInt32();
 
@@ -159,12 +227,17 @@ namespace Asset
 
             result.bsphere = new System.Numerics.Vector4(bs.ReadSingle(), bs.ReadSingle(), bs.ReadSingle(), bs.ReadSingle());
 
-            if ((result.flags & (int)0x00800000UL) != 0)
+            if ((result.flags & (uint)0x00800000UL) != 0)
             {
                 result.billboard_type = bs.ReadUInt32();
                 result.billboard_origin = new System.Numerics.Vector3(bs.ReadSingle(), bs.ReadSingle(), bs.ReadSingle());
                 result.billboard_pivot_pos = new System.Numerics.Vector3(bs.ReadSingle(), bs.ReadSingle(), bs.ReadSingle());
                 result.billboard_pivot_axis = new System.Numerics.Vector3(bs.ReadSingle(), bs.ReadSingle(), bs.ReadSingle());
+            } else
+            {
+                result.billboard_origin = null;
+                result.billboard_pivot_pos = null;
+                result.billboard_pivot_axis = null;
             }
 
             var num_verticies = bs.ReadInt32();

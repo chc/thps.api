@@ -38,7 +38,7 @@ namespace Asset
                     //write sectors
                     foreach(var sector in scene.sectors)
                     {
-
+                        Sector.WriteSector(sector, bs);
                     }
 
                     bs.Write((System.UInt32)scene.hierachy_objects.Count);

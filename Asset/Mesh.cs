@@ -40,6 +40,8 @@ namespace Asset
             bw.Write(mesh.center.Y);
             bw.Write(mesh.center.Z);
 
+            bw.Write(mesh.radius);
+
             bw.Write(mesh.inf.X);
             bw.Write(mesh.inf.Y);
             bw.Write(mesh.inf.Z);
@@ -53,17 +55,17 @@ namespace Asset
 
             bw.Write(mesh.material_checksum);
 
-            bw.Write(mesh.indices.Length); 
+            bw.Write((System.UInt32)mesh.indices.Length); 
             foreach(var indices in mesh.indices)
             {
-                bw.Write(indices.Count);
+                bw.Write((System.UInt32)indices.Count);
                 foreach(var index in indices)
                 {
                     bw.Write(index);
                 }
             }
         }
-        public static Mesh ReadMesh(System.IO.BinaryReader bs, System.Int32 sector_flags)
+        public static Mesh ReadMesh(System.IO.BinaryReader bs, System.UInt32 sector_flags)
         {
             var result = new Mesh();
 
