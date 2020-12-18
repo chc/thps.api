@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Asset;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 
@@ -17,14 +18,16 @@ namespace QScriptParse
 
             var provider = servicesCollection.BuildServiceProvider();
 
-            using (FileStream fileStream = new FileStream(@"D:\code\thug2_scripts\game\cas_skater_m.qb", FileMode.Open))
+            using (FileStream fileStream = new FileStream(@"C:\Levels\TestLevel\TestLevel.scn.xbx", FileMode.Open))
             {
                 using (BinaryReader bs = new BinaryReader(fileStream))
                 {
-                    QScript.TokenBufferReader qReader = new QScript.TokenBufferReader(provider.GetRequiredService<QScript.IChecksumResolver>(),bs);
-                    var entries = qReader.ReadBuffer();
-                    entries.Wait();
-                    Console.WriteLine("xxx");
+                    SceneReader sReader = new SceneReader(provider.GetRequiredService<QScript.IChecksumResolver>(),bs);
+                    var scene = sReader.ReadBuffer();
+                    scene.Wait();
+                    var payload = Newtonsoft.Json.JsonConvert.SerializeObject(scene.Result);
+                    File.WriteAllText("out.json", payload);
+                    Console.WriteLine(payload);
                 }
             }
                 
