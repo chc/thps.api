@@ -92,9 +92,9 @@ namespace QScript
         /// </summary>
         /// <param name="byteStream">The byte stream to calculate the checksum for.</param>
         /// <returns>A 32-bit reversed checksum.</returns>
-        public UInt32 Get(byte[] byteStream, bool is_binary = false)
+        public UInt32 Get(byte[] byteStream, bool is_binary = false, System.UInt32 initialCrc = 0xFFFFFFFF)
         {
-            System.UInt32 crc = 0xFFFFFFFF;
+            System.UInt32 crc = initialCrc;
             foreach(var ch in byteStream)
             {
                 char c = (char)ch;

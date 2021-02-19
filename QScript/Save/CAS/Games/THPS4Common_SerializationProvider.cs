@@ -127,12 +127,12 @@ namespace QScript.Save.CAS.Games
             }
 
 
-            bs.BaseStream.Seek(0, SeekOrigin.Begin);
-            bs.BaseStream.Write(new byte[] { 0, 0, 0, 0 }, 0, 4);
-            bs.BaseStream.Seek(0, SeekOrigin.Begin);
+            bs.BaseStream.Seek(4, SeekOrigin.Begin); //skip checksum (4 = sizeof uint32)
 
-            var save_bytes = bs.ReadBytes(header.dataSize);
-            var checksum = crc.Get(save_bytes, true);
+            System.UInt32 initialCrc = 3736805603; //initial CRC accumulator for null checksum (4 null bytes)
+
+            var save_bytes = bs.ReadBytes(header.dataSize - 4);
+            var checksum = crc.Get(save_bytes, true, initialCrc);
             if (checksum != header.checksum)
             {
                 return false;

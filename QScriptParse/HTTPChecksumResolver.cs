@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
+using System.Linq;
 
 namespace QScriptParse
 {
@@ -20,9 +21,15 @@ namespace QScriptParse
     {
         public const string HTTPClientFactoryName = "THPSAPI";
         private IHttpClientFactory _clientFactory;
-        public HTTPChecksumResolver(IHttpClientFactory clientFactory)
+        private List<ScriptKeyRecord> compressedScriptKeys;
+        private QScript.GamePlatform platform;
+        private QScript.GameVersion version;
+        public HTTPChecksumResolver(IHttpClientFactory clientFactory, QScript.GamePlatform platform, QScript.GameVersion version)
         {
             _clientFactory = clientFactory;
+            this.version = version;
+            this.platform = platform;
+            this.compressedScriptKeys = new List<ScriptKeyRecord>();
         }
         public async Task<uint> GenerateChecksum(string message)
         {
@@ -44,19 +51,17 @@ namespace QScriptParse
                 
             }
         }
-
-        public Task<uint> GenerateChecksum(byte[] message)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ScriptKeyRecord> GetCompressedKey(string key)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<string> ResolveChecksum(uint checksum, int? compressedByteSize = null)
         {
+            if(checksum == 0) {
+                return null;
+            }
+            if(compressedByteSize.HasValue) {
+                var compressedKey = await ResolveCompressedKey(checksum, compressedByteSize.Value);
+                if(compressedKey != null) {
+                    return compressedKey.name;
+                }
+            }
             using(var client = _clientFactory.CreateClient(HTTPClientFactoryName))
             {
                 var path = "/api/ScriptKey/getByChecksum/" + ((System.Int32)checksum).ToString();
@@ -68,7 +73,29 @@ namespace QScriptParse
             }
         }
 
-        public Task<ScriptKeyRecord> ResolveCompressedKey(long key, int compressedByteSize)
+        public async Task<ScriptKeyRecord> ResolveCompressedKey(long key, int compressedByteSize)
+        {
+            if(compressedScriptKeys.Count == 0) {
+                using (var client = _clientFactory.CreateClient(HTTPClientFactoryName))
+                {
+                    var path = "/api/ScriptKey/GetCompressedTable/" + platform + "/" + version;
+                    var result = await client.GetAsync(path);
+                    result.EnsureSuccessStatusCode();
+                    var resultString = await result.Content.ReadAsStringAsync();
+                    var results = JsonSerializer.Deserialize<List<ScriptKeyRecord>>(resultString);
+                    compressedScriptKeys.AddRange(results);
+                }
+            }
+
+            return compressedScriptKeys.Where(g => g.checksum == key && g.compressedByteSize == compressedByteSize).FirstOrDefault();
+        }
+
+        public Task<uint> GenerateChecksum(byte[] message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ScriptKeyRecord> GetCompressedKey(string key)
         {
             throw new NotImplementedException();
         }
