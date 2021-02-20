@@ -69,6 +69,7 @@ namespace THPS.API
             {
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                 options.SerializerSettings.Converters.Add(new QTokenConverter());
+                options.SerializerSettings.Converters.Add(new SymbolEntryConverter());
             }
             ).SetCompatibilityVersion(CompatibilityVersion.Latest);
 

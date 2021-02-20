@@ -29,7 +29,7 @@ namespace QScriptParse
             _clientFactory = clientFactory;
             this.version = version;
             this.platform = platform;
-            this.compressedScriptKeys = new List<ScriptKeyRecord>();
+            this.compressedScriptKeys = null;
         }
         public async Task<uint> GenerateChecksum(string message)
         {
@@ -75,15 +75,14 @@ namespace QScriptParse
 
         public async Task<ScriptKeyRecord> ResolveCompressedKey(long key, int compressedByteSize)
         {
-            if(compressedScriptKeys.Count == 0) {
+            if(compressedScriptKeys == null) {
                 using (var client = _clientFactory.CreateClient(HTTPClientFactoryName))
                 {
                     var path = "/api/ScriptKey/GetCompressedTable/" + platform + "/" + version;
                     var result = await client.GetAsync(path);
                     result.EnsureSuccessStatusCode();
                     var resultString = await result.Content.ReadAsStringAsync();
-                    var results = JsonSerializer.Deserialize<List<ScriptKeyRecord>>(resultString);
-                    compressedScriptKeys.AddRange(results);
+                    compressedScriptKeys = JsonSerializer.Deserialize<List<ScriptKeyRecord>>(resultString);
                 }
             }
 

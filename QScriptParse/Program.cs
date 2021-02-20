@@ -14,11 +14,11 @@ namespace QScriptParse
             var servicesCollection = new ServiceCollection();
             servicesCollection.AddHttpClient(HTTPChecksumResolver.HTTPClientFactoryName, c =>
             {
-                c.BaseAddress = new Uri("http://localhost:5000");
+                c.BaseAddress = new Uri("http://api.thmods.com");
 
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler() { 
                 Proxy = new WebProxy("http://localhost:8080"),
-                UseProxy = true
+                UseProxy = false
             });
             servicesCollection.AddSingleton<QScript.IChecksumResolver, HTTPChecksumResolver>(c => {
                 return new HTTPChecksumResolver(c.GetService<IHttpClientFactory>(), QScript.GamePlatform.PlatformType_PC, QScript.GameVersion.GameVersion_THUG2);
@@ -33,8 +33,7 @@ namespace QScriptParse
                     QScript.Save.CAS.ISerializationProvider deserializer = new QScript.Save.CAS.Games.THPS4Common_SerializationProvider(provider.GetRequiredService<QScript.IChecksumResolver>(), 1, 1);
                     var resultsTask = deserializer.DeserializeCAS(bs);
                     var results = resultsTask.Result;
-                    results.Remove("headerInfo");
-                    Console.WriteLine(results);
+                    Console.WriteLine(results.summary);
                 }
             }
             return -1;       

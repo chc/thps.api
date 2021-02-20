@@ -126,7 +126,6 @@ namespace QScript.Save.CAS.Games
                 return false;
             }
 
-
             bs.BaseStream.Seek(4, SeekOrigin.Begin); //skip checksum (4 = sizeof uint32)
 
             System.UInt32 initialCrc = 3736805603; //initial CRC accumulator for null checksum (4 null bytes)
@@ -141,31 +140,25 @@ namespace QScript.Save.CAS.Games
             bs.BaseStream.Seek(position, SeekOrigin.Begin);
             return true;
         }
-        public async Task<Dictionary<string, object>> DeserializeCAS(BinaryReader bs)
+        public async Task<CASData> DeserializeCAS(BinaryReader bs)
         {
             QScript.SymbolBufferReader qReader = new QScript.SymbolBufferReader(bs);
             FileHeader header = new FileHeader();
             header.Read(bs);
-            if (!ValidateChecksums(header, bs))
+            /*if (!ValidateChecksums(header, bs))
             {
                 return null;
-            }
-            var summary = (qReader.ReadBuffer());
-            summary = await ResolveChecksums(summary);
-            var save_data = (qReader.ReadBuffer());
-            save_data = await ResolveChecksums(save_data);
-            var dict = new Dictionary<string, object>();
-            dict["summary"] = summary;
-            dict["save_data"] = save_data;
-
-            var headerInfo = new Dictionary<string, object>();
-            headerInfo["version"] = header.version;
-            headerInfo["fixedFileSize"] = bs.BaseStream.Length;
-            dict["headerInfo"] = headerInfo;
-            return dict;
+            }*/
+            var result = new CASData();
+            result.summary = (qReader.ReadBuffer());
+            result.summary = await ResolveChecksums(result.summary);
+            result.save_data = (qReader.ReadBuffer());
+            result.save_data = await ResolveChecksums(result.save_data);
+            
+            return result;
         }
 
-        public async Task<MemoryStream> SerializeCAS(Dictionary<String, List<SymbolEntry>> saveData)
+        public async Task<MemoryStream> SerializeCAS(CASData saveData)
         {
             var qw = new SymbolBufferWriter();
             using (MemoryStream ms = new MemoryStream())
@@ -180,12 +173,12 @@ namespace QScript.Save.CAS.Games
                     var retMs = new MemoryStream();
 
 
-                    var summary_info = (List<SymbolEntry>)saveData["summary"];
+                    var summary_info = (List<SymbolEntry>)saveData.summary;
                     summary_info = await GenerateChecksums(summary_info);
                     qw.SerializeBuffer(bw, summary_info);
                     var summary_size = ms.Position - header_size;
 
-                    var save_data = (List<SymbolEntry>)saveData["save_data"];
+                    var save_data = (List<SymbolEntry>)saveData.save_data;
                     save_data = await GenerateChecksums(save_data);
                     qw.SerializeBuffer(bw, save_data);
                     var save_size = ms.Position - summary_size - header_size;
@@ -224,52 +217,49 @@ namespace QScript.Save.CAS.Games
                 }
             }
         }
-        private Task<List<SymbolEntry>> GenerateChecksums(List<SymbolEntry> input)
+        private async Task<List<SymbolEntry>> GenerateChecksums(List<SymbolEntry> input)
         {
-            return Task.Run(async () =>
+            List<SymbolEntry> list = new List<SymbolEntry>();
+            foreach (var item in input)
             {
-                List<SymbolEntry> list = new List<SymbolEntry>();
-                foreach (var item in input)
+                var shortKey = await checksumResolver.GetCompressedKey(item.name.ToString());
+                if (shortKey != null)
                 {
-                    var shortKey = await checksumResolver.GetCompressedKey(item.name.ToString());
-                    if (shortKey != null)
-                    {
-                        item.name = shortKey.checksum.ToString();
-                        item.compressedByteSize = shortKey.compressedByteSize;
-                    }
-                    else
-                    {
-                        if (item.name.GetType() != typeof(System.Int64))
-                        {
-                            item.name = (System.UInt32)await checksumResolver.GenerateChecksum(item.name.ToString());
-                        }
-
-                    }
-                    switch (item.type)
-                    {
-                        case QScript.ESymbolType.ESYMBOLTYPE_NAME:
-                            if (item.value.GetType() != typeof(System.Int64))
-                            {
-                                item.value = (System.UInt32)await checksumResolver.GenerateChecksum(item.value.ToString());
-                            }
-                            break;
-                        case QScript.ESymbolType.ESYMBOLTYPE_STRUCTURE:
-                            var lst = (List<object>)item.value;
-                            var structList = new List<SymbolEntry>();
-                            foreach (var structItem in lst)
-                            {
-                                structList.Add((SymbolEntry)structItem);
-                            }
-                            item.value = await GenerateChecksums(structList);
-                            break;
-                        case QScript.ESymbolType.ESYMBOLTYPE_ARRAY:
-                            item.value = await GenerateArrayChecksums(item);
-                            break;
-                    }
-                    list.Add(item);
+                    item.name = shortKey.checksum.ToString();
+                    item.compressedByteSize = shortKey.compressedByteSize;
                 }
-                return list;
-            });
+                else
+                {
+                    if (item.name.GetType() != typeof(System.Int64))
+                    {
+                        item.name = (System.UInt32)await checksumResolver.GenerateChecksum(item.name.ToString());
+                    }
+
+                }
+                switch (item.type)
+                {
+                    case QScript.ESymbolType.ESYMBOLTYPE_NAME:
+                        if (item.value.GetType() != typeof(System.Int64))
+                        {
+                            item.value = (System.UInt32)await checksumResolver.GenerateChecksum(item.value.ToString());
+                        }
+                        break;
+                    case QScript.ESymbolType.ESYMBOLTYPE_STRUCTURE:
+                        var lst = (List<object>)item.value;
+                        var structList = new List<SymbolEntry>();
+                        foreach (var structItem in lst)
+                        {
+                            structList.Add((SymbolEntry)structItem);
+                        }
+                        item.value = await GenerateChecksums(structList);
+                        break;
+                    case QScript.ESymbolType.ESYMBOLTYPE_ARRAY:
+                        item.value = await GenerateArrayChecksums(item);
+                        break;
+                }
+                list.Add(item);
+            }
+            return list;
         }
         private async Task<List<object>> GenerateArrayChecksums(SymbolEntry item)
         {
