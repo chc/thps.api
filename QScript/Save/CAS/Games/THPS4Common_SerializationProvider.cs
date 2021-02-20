@@ -245,13 +245,7 @@ namespace QScript.Save.CAS.Games
                         }
                         break;
                     case QScript.ESymbolType.ESYMBOLTYPE_STRUCTURE:
-                        var lst = (List<object>)item.value;
-                        var structList = new List<SymbolEntry>();
-                        foreach (var structItem in lst)
-                        {
-                            structList.Add((SymbolEntry)structItem);
-                        }
-                        item.value = await GenerateChecksums(structList);
+                        item.value = await GenerateChecksums((List<SymbolEntry>)item.value);
                         break;
                     case QScript.ESymbolType.ESYMBOLTYPE_ARRAY:
                         item.value = await GenerateArrayChecksums(item);

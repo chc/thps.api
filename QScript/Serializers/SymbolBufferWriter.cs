@@ -96,11 +96,7 @@ namespace QScript
                     }
                     break;
                 case ESymbolType.ESYMBOLTYPE_FLOAT:
-                    if(entry.value.GetType() == typeof(float) || entry.value.GetType() == typeof(double)) { 
-                        bw.Write((float)entry.value);
-                    } else {
-                        bw.Write(float.Parse(entry.value.ToString()));
-                    }
+                    bw.Write(float.Parse(entry.value.ToString()));
                     break;
                 case ESymbolType.ESYMBOLTYPE_VECTOR:
                     list = (List<object>)entry.value;
