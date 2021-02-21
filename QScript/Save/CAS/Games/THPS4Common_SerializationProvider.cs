@@ -232,7 +232,8 @@ namespace QScript.Save.CAS.Games
                 {
                     if (item.name.GetType() != typeof(System.Int64))
                     {
-                        item.name = (System.UInt32)await checksumResolver.GenerateChecksum(item.name.ToString());
+                        var crc = await checksumResolver.GenerateChecksum(item.name.ToString());
+                        item.name = (System.UInt32)crc;
                     }
 
                 }

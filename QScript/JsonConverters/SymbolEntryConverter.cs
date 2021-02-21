@@ -13,7 +13,7 @@ namespace QScript
         {
             return objectType == typeof(List<SymbolEntry>);
         }
-        private ESymbolType GetSymbolTypeFromToken(JsonReader reader, bool compress = true) {
+        private ESymbolType GetSymbolTypeFromToken(JsonReader reader, bool noZeroes = false) {
             ESymbolType result = ESymbolType.ESYMBOLTYPE_NONE;
             switch(reader.TokenType) {
                 case JsonToken.String:
@@ -21,24 +21,32 @@ namespace QScript
                 break;   
                 case JsonToken.Integer:
                     result = ESymbolType.ESYMBOLTYPE_INTEGER;
-                    if(compress) {
-                        if((long)reader.Value < 65535) {
-                            result = ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES;
-                        }
-                        if((long)reader.Value < 255) {
-                            result = ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE;
-                        }
-                        if((long)reader.Value == 0) {
-                            result = ESymbolType.ESYMBOLTYPE_ZERO_INTEGER;
-                        }
+
+                    long v = (long)reader.Value;
+                    if(v > 0) {
+                        result = ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE;
+                    }
+                    if(v > 127) {
+                        result = ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_ONE_BYTE;
+                    }
+                    if(v > 255) {
+                        result = ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES;
+                    }
+                    if(v > 32767) {
+                        result = ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_TWO_BYTES;
+                    }
+                    if(v > 65535) {
+                        result = ESymbolType.ESYMBOLTYPE_INTEGER;
+                    }
+      
+                    if(!noZeroes && (long)v == 0) {
+                        result = ESymbolType.ESYMBOLTYPE_ZERO_INTEGER;
                     }
                 break;
                 case JsonToken.Float:
                     result = ESymbolType.ESYMBOLTYPE_FLOAT;
-                    if(compress) {
-                        if((double)reader.Value == 0.0) {
-                            result = ESymbolType.ESYMBOLTYPE_ZERO_FLOAT;
-                        }
+                    if(!noZeroes && (double)reader.Value == 0.0) {
+                        result = ESymbolType.ESYMBOLTYPE_ZERO_FLOAT;
                     }
                 break;
                 case JsonToken.EndObject:
@@ -58,16 +66,16 @@ namespace QScript
            foreach(var item in symbols) {
                 if(item.type == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
                     List<SymbolEntry> children = (List<SymbolEntry>)(item.value);
-                    var typeProperty = children.Where(s => s.name.ToString().CompareTo("type") == 0).FirstOrDefault();
+                    var typeProperty = children.Where(s => s.name.ToString().Equals("type")).FirstOrDefault();
                     if(typeProperty != null) {
                         var typeName = typeProperty.value;
                         if(typeName.ToString().Equals("name")) { //handle name
-                            var nameValue = children.Where(s => s.name.ToString().CompareTo("name") == 0).FirstOrDefault();
-                            item.type = ESymbolType.ESYMBOLTYPE_NAME;
-                            item.value = nameValue;
+                            var nameValue = children.Where(s => s.name.ToString().Equals("name") || s.name.ToString().Equals("checksum")).FirstOrDefault();
+                            item.value = nameValue.value;
+                            item.type = ESymbolType.ESYMBOLTYPE_NAME;                            
                             continue;
                         } else if(typeName.ToString().Equals("vec2") || typeName.ToString().Equals("vec3")) {
-                            var vecList = (SymbolEntry)children.Where(s => s.name.ToString().CompareTo("value") == 0).FirstOrDefault();
+                            var vecList = (SymbolEntry)children.Where(s => s.name.ToString().Equals("value")).FirstOrDefault();
                             var list = (List<object>)vecList.value;
                             
                             item.type = ESymbolType.ESYMBOLTYPE_VECTOR;
@@ -85,7 +93,6 @@ namespace QScript
                         List<SymbolEntry> symbolList = (List<SymbolEntry>)child;
                         PerformTypeConversions(symbolList);
                     }
-
                 }
             }
         }
@@ -115,24 +122,27 @@ namespace QScript
             return result;
         }
         private int GetSymbolTypePrecedence(ESymbolType type) {
-            if(type == ESymbolType.ESYMBOLTYPE_INTEGER || type == ESymbolType.ESYMBOLTYPE_FLOAT || type == ESymbolType.ESYMBOLTYPE_STRING || type == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
+             if(type == ESymbolType.ESYMBOLTYPE_ZERO_INTEGER || type == ESymbolType.ESYMBOLTYPE_ZERO_FLOAT) {
+                return 4;
+            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER || type == ESymbolType.ESYMBOLTYPE_FLOAT || type == ESymbolType.ESYMBOLTYPE_STRING || type == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
                 return 3;
-            }
-
-            else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE) {
+            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE || type == ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_ONE_BYTE) {
                 return 1;
-            }
-            else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES) {
+            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES || type == ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_TWO_BYTES) {
                 return 2;
             }
             return 0;
         }
         private SymbolEntry ReadSymbolEntry(JsonReader reader, string propertyName) {
             SymbolEntry result = new SymbolEntry();
-            result.name = propertyName; //XXX: convert to int of numeric
+            result.name = propertyName;
+            if(System.UInt32.TryParse(propertyName, out System.UInt32 checksum)) {
+                result.name = checksum;
+            }
             result.compressedByteSize = null;
 
             result.type = GetSymbolTypeFromToken(reader);
+            result.subType = ESymbolType.ESYMBOLTYPE_NONE;
             int depth = reader.Depth;
             if(result.type == ESymbolType.ESYMBOLTYPE_ARRAY) {
                 var list = new List<object>();
@@ -147,8 +157,9 @@ namespace QScript
                     }
                     else if(reader.TokenType != JsonToken.EndArray) {
                         list.Add(reader.Value);
-                        ESymbolType type = GetSymbolTypeFromToken(reader);
-                        int precedence = GetSymbolTypePrecedence(type);
+                        ESymbolType type = GetSymbolTypeFromToken(reader, true);
+
+                        int precedence = GetSymbolTypePrecedence(type);                        
 
                         if(precedence > lastPrecedence) {
                             result.subType = type;
@@ -203,8 +214,8 @@ namespace QScript
             
             writer.WritePropertyName("value");
             writer.WriteStartArray();
-            foreach(var arrayItem in (List<System.Single>)value) {
-                writer.WriteValue(arrayItem);
+            foreach(var arrayItem in (List<object>)value) {
+                writer.WriteValue(System.Double.Parse(arrayItem.ToString()));
             }
             writer.WriteEndArray();
 
@@ -227,9 +238,24 @@ namespace QScript
                     WriteSymbolList(writer, (List<SymbolEntry>)symbolList);
                 }
                 
-            } else {            
+            } else {     
                 foreach(var arrayItem in (List<object>)value) {
-                    writer.WriteValue(arrayItem);
+                    switch(parent.subType) {
+                        case ESymbolType.ESYMBOLTYPE_NAME:
+                            WriteNameValue(writer, arrayItem);
+                        break;
+                        case ESymbolType.ESYMBOLTYPE_STRUCTURE:
+                            WriteSymbolList(writer, (List<SymbolEntry>)arrayItem);
+                        break;
+                        case ESymbolType.ESYMBOLTYPE_VECTOR:
+                        case ESymbolType.ESYMBOLTYPE_PAIR:
+                        throw new NotImplementedException();
+                        break;
+                        default:
+                            writer.WriteValue(arrayItem);
+                        break;
+                    }
+                    
                 }
             }
             writer.WriteEndArray();
