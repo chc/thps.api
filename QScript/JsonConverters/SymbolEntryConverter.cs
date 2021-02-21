@@ -62,37 +62,69 @@ namespace QScript
             }
             return result;
         }
+        SymbolEntry CondenseStructureToSymbol(List<SymbolEntry> list) {
+            SymbolEntry entry = new SymbolEntry();
+            var typeProperty = list.Where(s => s.name.ToString().Equals("type")).FirstOrDefault();
+            if(typeProperty != null) {
+                var typeName = typeProperty.value;
+                if(typeName.ToString().Equals("name")) { //handle name
+                    var nameValue = list.Where(s => s.name.ToString().Equals("name") || s.name.ToString().Equals("checksum")).FirstOrDefault();
+                    entry.value = nameValue.value;
+                    entry.type = ESymbolType.ESYMBOLTYPE_NAME;                            
+                } else if(typeName.ToString().Equals("vec2") || typeName.ToString().Equals("vec3")) {
+                    var vecList = (SymbolEntry)list.Where(s => s.name.ToString().Equals("value")).FirstOrDefault();
+                    entry = vecList;
+                    List<object> children = (List<object>)vecList.value;
+                    if(children.Count == 2) {
+                        entry.type = ESymbolType.ESYMBOLTYPE_PAIR;
+                    } else {
+                        entry.type = ESymbolType.ESYMBOLTYPE_VECTOR;
+                    }
+                } else {
+                    return null;
+                }
+                return entry;
+            }
+            return null;
+        }
         void PerformTypeConversions(List<SymbolEntry> symbols) {
+
+           List<SymbolEntry> outputSymbols = new List<SymbolEntry>();
            foreach(var item in symbols) {
                 if(item.type == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
                     List<SymbolEntry> children = (List<SymbolEntry>)(item.value);
-                    var typeProperty = children.Where(s => s.name.ToString().Equals("type")).FirstOrDefault();
-                    if(typeProperty != null) {
-                        var typeName = typeProperty.value;
-                        if(typeName.ToString().Equals("name")) { //handle name
-                            var nameValue = children.Where(s => s.name.ToString().Equals("name") || s.name.ToString().Equals("checksum")).FirstOrDefault();
-                            item.value = nameValue.value;
-                            item.type = ESymbolType.ESYMBOLTYPE_NAME;                            
-                            continue;
-                        } else if(typeName.ToString().Equals("vec2") || typeName.ToString().Equals("vec3")) {
-                            var vecList = (SymbolEntry)children.Where(s => s.name.ToString().Equals("value")).FirstOrDefault();
-                            var list = (List<object>)vecList.value;
-                            
-                            item.type = ESymbolType.ESYMBOLTYPE_VECTOR;
-                            if(list.Count == 2) {
-                                item.type = ESymbolType.ESYMBOLTYPE_PAIR;
-                            }
-                            item.value = list;
-                            continue;
-                        }
+                    SymbolEntry result = CondenseStructureToSymbol(children);
+                    if(result != null) {
+                        item.value = result.value;
+                        item.type = result.type;
+                        item.subType = result.subType;
                     }
                     PerformTypeConversions(children);
                 } else if (item.type == ESymbolType.ESYMBOLTYPE_ARRAY && item.subType == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
                     List<object> arrayHead = (List<object>)item.value;
+
+                    List<object> condensedChildren = new List<object>();
+                    
                     foreach(var child in arrayHead) {
                         List<SymbolEntry> symbolList = (List<SymbolEntry>)child;
-                        PerformTypeConversions(symbolList);
+                        SymbolEntry result = CondenseStructureToSymbol(symbolList);
+                        if(result != null) {
+                            condensedChildren.Add(result);
+                        } else {
+                           PerformTypeConversions(symbolList);
+                        }
                     }
+
+                    if(condensedChildren.Count > 0) {
+                        var itemList = new List<object>();
+                        item.value = itemList;
+                        foreach(var child in (List<object>)condensedChildren) {
+                            var childSymbol = (SymbolEntry)child;
+                            itemList.Add(childSymbol.value);
+                        }
+                        item.subType = ((SymbolEntry)(condensedChildren.First())).type;
+                    }
+                    
                 }
             }
         }
@@ -214,8 +246,8 @@ namespace QScript
             
             writer.WritePropertyName("value");
             writer.WriteStartArray();
-            foreach(var arrayItem in (List<object>)value) {
-                writer.WriteValue(System.Double.Parse(arrayItem.ToString()));
+            foreach(var arrayItem in (List<System.Single>)value) {
+                writer.WriteValue(arrayItem);
             }
             writer.WriteEndArray();
 
@@ -232,31 +264,24 @@ namespace QScript
             
         }
         private void WriteSymbolArray(JsonWriter writer, object value, SymbolEntry parent) {
-            writer.WriteStartArray();
-            if(parent.subType == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
-                foreach(var symbolList in (List<object>)value) {
-                    WriteSymbolList(writer, (List<SymbolEntry>)symbolList);
+            writer.WriteStartArray();    
+            foreach(var arrayItem in (List<object>)value) {
+                switch(parent.subType) {
+                    case ESymbolType.ESYMBOLTYPE_NAME:
+                        WriteNameValue(writer, arrayItem);
+                    break;
+                    case ESymbolType.ESYMBOLTYPE_STRUCTURE:
+                        WriteSymbolList(writer, (List<SymbolEntry>)arrayItem);
+                    break;
+                    case ESymbolType.ESYMBOLTYPE_VECTOR:
+                    case ESymbolType.ESYMBOLTYPE_PAIR:
+                    throw new NotImplementedException();
+                    break;
+                    default:
+                        writer.WriteValue(arrayItem);
+                    break;
                 }
                 
-            } else {     
-                foreach(var arrayItem in (List<object>)value) {
-                    switch(parent.subType) {
-                        case ESymbolType.ESYMBOLTYPE_NAME:
-                            WriteNameValue(writer, arrayItem);
-                        break;
-                        case ESymbolType.ESYMBOLTYPE_STRUCTURE:
-                            WriteSymbolList(writer, (List<SymbolEntry>)arrayItem);
-                        break;
-                        case ESymbolType.ESYMBOLTYPE_VECTOR:
-                        case ESymbolType.ESYMBOLTYPE_PAIR:
-                        throw new NotImplementedException();
-                        break;
-                        default:
-                            writer.WriteValue(arrayItem);
-                        break;
-                    }
-                    
-                }
             }
             writer.WriteEndArray();
         }
