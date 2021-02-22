@@ -13,7 +13,8 @@ namespace QScript
         {
             return objectType == typeof(List<SymbolEntry>);
         }
-        private ESymbolType GetSymbolTypeFromToken(JsonReader reader, bool noZeroes = false) {
+        #region Reader
+        private ESymbolType GetSymbolTypeFromToken(JsonReader reader, bool zeroes = false, bool optimize = true) {
             ESymbolType result = ESymbolType.ESYMBOLTYPE_NONE;
             switch(reader.TokenType) {
                 case JsonToken.String:
@@ -21,31 +22,34 @@ namespace QScript
                 break;   
                 case JsonToken.Integer:
                     result = ESymbolType.ESYMBOLTYPE_INTEGER;
+                    if(optimize) {
+                        long v = (long)reader.Value;
+                        if(v > -127 && v < 127) {
+                            result = ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE;
+                        } else if(v > 255 && v > -32767 && v < 32767) {
+                            result = ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES;
+                        }
 
-                    long v = (long)reader.Value;
-                    if(v > 0) {
-                        result = ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE;
-                    }
-                    if(v > 127) {
-                        result = ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_ONE_BYTE;
-                    }
-                    if(v > 255) {
-                        result = ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES;
-                    }
-                    if(v > 32767) {
-                        result = ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_TWO_BYTES;
-                    }
-                    if(v > 65535) {
-                        result = ESymbolType.ESYMBOLTYPE_INTEGER;
-                    }
-      
-                    if(!noZeroes && (long)v == 0) {
-                        result = ESymbolType.ESYMBOLTYPE_ZERO_INTEGER;
-                    }
+                        if(result == ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE || result == ESymbolType.ESYMBOLTYPE_INTEGER) {
+                            if(v > 127 && v < 255) {
+                                result = ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_ONE_BYTE;
+                            }
+                        }
+
+                        if(result == ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES || result == ESymbolType.ESYMBOLTYPE_INTEGER) {
+                            if(v > 255 && v < 65535) {
+                                result = ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_TWO_BYTES;
+                            }
+                        }
+
+                        if(zeroes && (long)v == 0) {
+                            result = ESymbolType.ESYMBOLTYPE_ZERO_INTEGER;
+                        }
+                    }                    
                 break;
                 case JsonToken.Float:
                     result = ESymbolType.ESYMBOLTYPE_FLOAT;
-                    if(!noZeroes && (double)reader.Value == 0.0) {
+                    if(zeroes && (double)reader.Value == 0.0) {
                         result = ESymbolType.ESYMBOLTYPE_ZERO_FLOAT;
                     }
                 break;
@@ -155,20 +159,24 @@ namespace QScript
         }
         private int GetSymbolTypePrecedence(ESymbolType type) {
              if(type == ESymbolType.ESYMBOLTYPE_ZERO_INTEGER || type == ESymbolType.ESYMBOLTYPE_ZERO_FLOAT) {
-                return 4;
-            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER || type == ESymbolType.ESYMBOLTYPE_FLOAT || type == ESymbolType.ESYMBOLTYPE_STRING || type == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
-                return 3;
-            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE || type == ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_ONE_BYTE) {
                 return 1;
-            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES || type == ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_TWO_BYTES) {
+            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER || type == ESymbolType.ESYMBOLTYPE_FLOAT || type == ESymbolType.ESYMBOLTYPE_STRING || type == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
+                return 6;
+            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE) {
                 return 2;
+            } else if(type == ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_ONE_BYTE) {
+                return 3;
+            } else if(type == ESymbolType.ESYMBOLTYPE_INTEGER_TWO_BYTES) {
+                return 4;
+            } else if(type == ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_TWO_BYTES) {
+                return 5;
             }
             return 0;
         }
         private SymbolEntry ReadSymbolEntry(JsonReader reader, string propertyName) {
             SymbolEntry result = new SymbolEntry();
             result.name = propertyName;
-            if(System.UInt32.TryParse(propertyName, out System.UInt32 checksum)) {
+            if(System.Int64.TryParse(propertyName, out System.Int64 checksum)) {
                 result.name = checksum;
             }
             result.compressedByteSize = null;
@@ -189,7 +197,7 @@ namespace QScript
                     }
                     else if(reader.TokenType != JsonToken.EndArray) {
                         list.Add(reader.Value);
-                        ESymbolType type = GetSymbolTypeFromToken(reader, true);
+                        ESymbolType type = GetSymbolTypeFromToken(reader, true, true);
 
                         int precedence = GetSymbolTypePrecedence(type);                        
 
@@ -212,6 +220,7 @@ namespace QScript
 
             return result;
         }
+        #endregion
         #region Writer
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

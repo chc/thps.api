@@ -145,10 +145,10 @@ namespace QScript.Save.CAS.Games
             QScript.SymbolBufferReader qReader = new QScript.SymbolBufferReader(bs);
             FileHeader header = new FileHeader();
             header.Read(bs);
-            /*if (!ValidateChecksums(header, bs))
+            if (!ValidateChecksums(header, bs))
             {
                 return null;
-            }*/
+            }
             var result = new CASData();
             result.summary = (qReader.ReadBuffer());
             result.summary = await ResolveChecksums(result.summary);
