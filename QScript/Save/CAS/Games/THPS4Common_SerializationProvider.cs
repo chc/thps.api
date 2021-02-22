@@ -225,7 +225,7 @@ namespace QScript.Save.CAS.Games
                 var shortKey = await checksumResolver.GetCompressedKey(item.name.ToString());
                 if (shortKey != null)
                 {
-                    item.name = shortKey.checksum.ToString();
+                    item.name = shortKey.checksum;
                     item.compressedByteSize = shortKey.compressedByteSize;
                 }
                 else
@@ -246,6 +246,15 @@ namespace QScript.Save.CAS.Games
                         }
                         break;
                     case QScript.ESymbolType.ESYMBOLTYPE_STRUCTURE:
+                    /*
+                        var childrenCopy = new List<SymbolEntry>();
+                        var structList =  (List<object>)item.value;
+                        foreach(var child in structList) {
+                            childrenCopy.Add((SymbolEntry)child);
+                        }
+
+                        item.value = await GenerateChecksums(childrenCopy);
+                        */
                         item.value = await GenerateChecksums((List<SymbolEntry>)item.value);
                         break;
                     case QScript.ESymbolType.ESYMBOLTYPE_ARRAY:

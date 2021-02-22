@@ -14,7 +14,7 @@ namespace QScript
             return objectType == typeof(List<SymbolEntry>);
         }
         #region Reader
-        private ESymbolType GetSymbolTypeFromToken(JsonReader reader, bool zeroes = false, bool optimize = true) {
+        private ESymbolType GetSymbolTypeFromToken(JsonReader reader, bool zeroes = true, bool optimize = true) {
             ESymbolType result = ESymbolType.ESYMBOLTYPE_NONE;
             switch(reader.TokenType) {
                 case JsonToken.String:
@@ -197,7 +197,7 @@ namespace QScript
                     }
                     else if(reader.TokenType != JsonToken.EndArray) {
                         list.Add(reader.Value);
-                        ESymbolType type = GetSymbolTypeFromToken(reader, true, true);
+                        ESymbolType type = GetSymbolTypeFromToken(reader, false, false);
 
                         int precedence = GetSymbolTypePrecedence(type);                        
 
