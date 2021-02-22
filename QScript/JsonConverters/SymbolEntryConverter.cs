@@ -17,6 +17,9 @@ namespace QScript
         private ESymbolType GetSymbolTypeFromToken(JsonReader reader, bool zeroes = true, bool optimize = true) {
             ESymbolType result = ESymbolType.ESYMBOLTYPE_NONE;
             switch(reader.TokenType) {
+                case JsonToken.Boolean:
+                    result = ESymbolType.ESYMBOLTYPE_NAME;
+                    break;
                 case JsonToken.String:
                     result = ESymbolType.ESYMBOLTYPE_STRING;
                 break;   
@@ -213,6 +216,9 @@ namespace QScript
                 
             } else if(result.type == ESymbolType.ESYMBOLTYPE_STRUCTURE) {
                 result.value = ReadSymbolList(reader, depth);
+            } else if(result.type == ESymbolType.ESYMBOLTYPE_NAME && reader.ValueType == typeof(bool))  {
+                result.value = result.name;
+                result.name = (System.Int64)0;
             } else {
                 result.value = reader.Value;
             }
@@ -234,6 +240,13 @@ namespace QScript
             writer.WriteEndObject();
         }
         private void WriteSymbolEntry(JsonWriter writer, SymbolEntry value) {
+            if(value.type == ESymbolType.ESYMBOLTYPE_NAME) { //write as flag
+                if(value.name.ToString().Equals("0")) {
+                    writer.WritePropertyName(value.value.ToString());
+                    writer.WriteValue(true);
+                    return;
+                }
+            } 
             var propertyName = value.name.ToString();
             writer.WritePropertyName(propertyName);
             if(CanConvert(value.GetType())) {
