@@ -76,7 +76,7 @@ namespace QScript
                 case ESymbolType.ESYMBOLTYPE_ZERO_INTEGER:
                     break;
                 case ESymbolType.ESYMBOLTYPE_INTEGER_ONE_BYTE:
-                    bw.Write(byte.Parse(entry.value.ToString()));
+                    bw.Write(sbyte.Parse(entry.value.ToString()));
                     break;
                 case ESymbolType.ESYMBOLTYPE_UNSIGNED_INTEGER_ONE_BYTE:
                     bw.Write(byte.Parse(entry.value.ToString()));
