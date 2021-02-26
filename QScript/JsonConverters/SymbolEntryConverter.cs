@@ -76,7 +76,7 @@ namespace QScript
                 var typeName = typeProperty.value;
                 if(typeName.ToString().Equals("name")) { //handle name
                     var nameValue = list.Where(s => s.name.ToString().Equals("name") || s.name.ToString().Equals("checksum")).FirstOrDefault();
-                    entry.value = nameValue.value;
+                    entry.value = nameValue?.value ?? 0;
                     entry.type = ESymbolType.ESYMBOLTYPE_NAME;                            
                 } else if(typeName.ToString().Equals("vec2") || typeName.ToString().Equals("vec3")) {
                     var vecList = (SymbolEntry)list.Where(s => s.name.ToString().Equals("value")).FirstOrDefault();
