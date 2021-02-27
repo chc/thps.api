@@ -64,6 +64,9 @@ namespace QScript
                 case JsonToken.StartArray:
                     result = ESymbolType.ESYMBOLTYPE_ARRAY;
                 break;
+                case JsonToken.Null:
+                result = ESymbolType.ESYMBOLTYPE_NONE;
+                break;
                 default:
                 throw new NotImplementedException();
             }
