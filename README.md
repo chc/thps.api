@@ -24,3 +24,4 @@ This next part needs improvement, but basically comment out the Authorize attrib
 
 `
 curl -X POST "http://localhost:5000/api/APIKey/GenerateKey" -H  "accept: text/plain" -H  "Content-Type: application/json-patch+json" -d "{  \"name\": \"dev test key\",  \"roles\": [    \"Admin\"  ]}"
+`
