@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QScriptParse", "QScriptPars
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asset", "Asset\Asset.csproj", "{1A221615-A899-4CFB-B3A1-BDDD6B26C365}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QScript.External", "QScript.External\QScript.External.csproj", "{4879BA5F-736A-44D5-AE7A-D2E5D74443D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{1A221615-A899-4CFB-B3A1-BDDD6B26C365}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A221615-A899-4CFB-B3A1-BDDD6B26C365}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A221615-A899-4CFB-B3A1-BDDD6B26C365}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4879BA5F-736A-44D5-AE7A-D2E5D74443D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4879BA5F-736A-44D5-AE7A-D2E5D74443D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4879BA5F-736A-44D5-AE7A-D2E5D74443D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4879BA5F-736A-44D5-AE7A-D2E5D74443D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

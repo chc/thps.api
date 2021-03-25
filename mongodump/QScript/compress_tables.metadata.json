@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"QScript.compress_tables"}],"uuid":"c3916c8e79ff4147aff9f90d9e1ce05a","collectionName":"compress_tables"}
