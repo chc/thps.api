@@ -148,6 +148,12 @@ namespace QScript
                     }
 
                     return checksum_name;
+                case EScriptToken.ESCRIPTTOKEN_VECTOR:
+                    var res = new float[3];
+                    res[0] = _bs.ReadSingle();
+                    res[1] = _bs.ReadSingle();
+                    res[2] = _bs.ReadSingle();
+                    return res;
                 default:
                     throw new ArgumentException("Got unhandled symbol", type.ToString());
             }

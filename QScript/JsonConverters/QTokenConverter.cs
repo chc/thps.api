@@ -142,6 +142,18 @@ namespace QScript.JsonConverters
                     case EScriptToken.ESCRIPTTOKEN_ENDOFFILE:
                     case EScriptToken.ESCRIPTTOKEN_COMMA:
                         break;
+                    case EScriptToken.ESCRIPTTOKEN_VECTOR:
+                        inAssignment = false;
+                        writer.WriteStartObject();
+                        float[] v = (float[])item.value;
+                        writer.WritePropertyName("x");
+                        writer.WriteValue(v[0]);
+                        writer.WritePropertyName("y");
+                        writer.WriteValue(v[1]);
+                        writer.WritePropertyName("z");
+                        writer.WriteValue(v[2]);
+                        writer.WriteEndObject();
+                        break;
                     default:
                         throw new NotImplementedException();
                         break;
